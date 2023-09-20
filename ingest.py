@@ -25,19 +25,13 @@ from langchain.vectorstores import Chroma
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.docstore.document import Document
 
-if not load_dotenv():
-    print("Could not load .env file or it is empty. Please check if it exists and is readable.")
-    exit(1)
 
 from constants import CHROMA_SETTINGS
 import chromadb
 
-# Load environment variables
-persist_directory = os.environ.get('PERSIST_DIRECTORY')
-source_directory = os.environ.get('SOURCE_DIRECTORY', 'source_documents')
-embeddings_model_name = os.environ.get('EMBEDDINGS_MODEL_NAME')
-chunk_size = 500
-chunk_overlap = 50
+from omegaconf import OmegaConf
+
+
 
 
 # Custom document loaders
@@ -139,7 +133,7 @@ def does_vectorstore_exist(persist_directory: str, embeddings: HuggingFaceEmbedd
         return False
     return True
 
-def main():
+def main(persist_directory,source_directory,embeddings_model_name):
     # Create embeddings
     embeddings = HuggingFaceEmbeddings(model_name=embeddings_model_name)
     # Chroma client
@@ -166,4 +160,18 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if not load_dotenv():
+        print("Could not load .env file or it is empty. Please check if it exists and is readable.")
+        exit(1)
+    conf = OmegaConf.from_cli()
+
+    # Load environment variables
+    persist_directory = conf.get('PERSIST_DIRECTORY',os.environ.get('PERSIST_DIRECTORY'))
+    source_directory = conf.get('SOURCE_DIRECTORY', os.environ.get('SOURCE_DIRECTORY', 'source_documents'))
+    embeddings_model_name = conf.get('EMBEDDINGS_MODEL_NAME', os.environ.get('EMBEDDINGS_MODEL_NAME'))
+    chunk_size = 500
+    chunk_overlap = 50
+
+    # python ingest.py PERSIST_DIRECTORY=db1 SOURCE_DIRECTORY=medical
+    print(persist_directory,source_directory,embeddings_model_name)
+    main(persist_directory,source_directory,embeddings_model_name)
