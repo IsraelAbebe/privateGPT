@@ -71,11 +71,11 @@ if __name__ == "__main__":
     embeddings_model_name = conf.get('EMBEDDINGS_MODEL_NAME',os.environ.get("EMBEDDINGS_MODEL_NAME")) 
     persist_directory = conf.get('PERSIST_DIRECTORY', os.environ.get('PERSIST_DIRECTORY'))
     
-    model_type = os.environ.get('MODEL_TYPE',conf.get('MODEL_TYPE')) 
-    model_path = os.environ.get('MODEL_PATH',conf.get('MODEL_PATH'))
-    model_n_ctx = os.environ.get('MODEL_N_CTX',conf.get('MODEL_N_CTX')) 
-    model_n_batch = int(os.environ.get('MODEL_N_BATCH',8))
-    target_source_chunks = int(os.environ.get('TARGET_SOURCE_CHUNKS',4)) 
+    model_type = conf.get('MODEL_TYPE', os.environ.get('MODEL_TYPE')) 
+    model_path = conf.get('MODEL_PATH', os.environ.get('MODEL_PATH'))
+    model_n_ctx = conf.get('MODEL_N_CTX', os.environ.get('MODEL_N_CTX')) 
+    model_n_batch = int(conf.get('MODEL_N_BATCH',os.environ.get('MODEL_N_BATCH',8)))
+    target_source_chunks = int(conf.get('TARGET_SOURCE_CHUNKS', os.environ.get('TARGET_SOURCE_CHUNKS',4))) 
 
     # python privateGPT.py PERSIST_DIRECTORY=db1
     print(embeddings_model_name, persist_directory, model_type, model_path, model_n_ctx, model_n_batch, target_source_chunks)
