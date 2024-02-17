@@ -2,6 +2,16 @@
 ### You will run into a segfault in mac
 FROM python:3.11.6-slim-bookworm as base
 
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+RUN apt-get install swig -y
+
+
+RUN mkdir -p /cache
+ENV TRANSFORMERS_CACHE=/cache
+ENV MPLCONFIGDIR=/cache
+
+
+
 # Install poetry
 RUN pip install pipx
 RUN python3 -m pipx ensurepath
@@ -19,6 +29,7 @@ RUN apt update && apt install -y \
 
 # https://python-poetry.org/docs/configuration/#virtualenvsin-project
 ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
 
 FROM base as dependencies
 WORKDIR /home/worker/app
@@ -39,11 +50,37 @@ WORKDIR /home/worker/app
 
 RUN mkdir local_data; chown worker local_data
 RUN mkdir models; chown worker models
+
+
 COPY --chown=worker --from=dependencies /home/worker/app/.venv/ .venv
 COPY --chown=worker private_gpt/ private_gpt
 COPY --chown=worker fern/ fern
 COPY --chown=worker *.yaml *.md ./
 COPY --chown=worker scripts/ scripts
+
+
+RUN pip install opencv-python numpy augraphy pillow 
+# RUN pip install fastdeploy-gpu-python -f https://www.paddlepaddle.org.cn/whl/fastdeploy.html
+RUN pip install install paddlepaddle==2.5.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install install rapidocr_onnxruntime --q
+RUN pip install rapidocr_paddle --q
+RUN pip install PyMuPDF==1.20.2
+RUN pip install "paddleocr>=2.7.0.3"
+RUN pip install flask streamlit
+
+RUN mkdir -p ./.cache && chmod -R 777 ./.cache
+ENV HF_HOME="./.cache"
+ENV TRANSFORMERS_CACHE="./.cache"
+ENV MPLCONFIGDIR="./.cache"
+
+ENV NLTK_DATA=./.cache/
+# RUN chmod -R 777 /usr/local/lib/python3.10/site-packages/llama_index/core/_static/nltk_cache/corpora
+RUN python -c "import nltk; nltk.download('stopwords',download_dir='./.cache/')"
+
+# RUN wget -P models/ https://paddleocr.bj.bcebos.com/ppstructure/models/layout/picodet_lcnet_x1_0_layout_infer.tar && tar xf models/picodet_lcnet_x1_0_layout_infer.tar -C models/
+# RUN wget -P models/ https://paddleocr.bj.bcebos.com/PP-OCRv3/chinese/ch_PP-OCRv3_det_infer.tar  && tar xf models/ch_PP-OCRv3_det_infer.tar -C models/
+# RUN wget -P models/ https://paddleocr.bj.bcebos.com/PP-OCRv3/chinese/ch_PP-OCRv3_rec_infer.tar  && tar xf models/ch_PP-OCRv3_rec_infer.tar -C models/
+# RUN wget -P models/ https://paddleocr.bj.bcebos.com/ppstructure/models/slanet/ch_ppstructure_mobile_v2.0_SLANet_infer.tar  && tar xf models/ch_ppstructure_mobile_v2.0_SLANet_infer.tar -C models/
 
 ENV PYTHONPATH="$PYTHONPATH:/private_gpt/"
 

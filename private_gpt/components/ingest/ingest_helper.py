@@ -5,15 +5,54 @@ from llama_index import Document
 from llama_index.readers import JSONReader, StringIterableReader
 from llama_index.readers.file.base import DEFAULT_FILE_READER_CLS
 
+
+from llama_index.readers.base import BaseReader
+from llama_index import Document
+
+# import cv2
+# import fastdeploy.vision as vision
+
+from private_gpt.components.ingest.ocr import *
 logger = logging.getLogger(__name__)
+
+# model = vision.detection.PPYOLOE("ppyoloe_crn_l_300e_coco/model.pdmodel",
+#                             "ppyoloe_crn_l_300e_coco/model.pdiparams",
+#                             "ppyoloe_crn_l_300e_coco/infer_cfg.yml")
+
+from rapidocr_paddle import RapidOCR
+
+engine = RapidOCR()
+class MyImageReader(BaseReader):
+    def load_data(self, file, extra_info=None):
+        result, elapse_list = engine(file)
+        text = str(result)
+        return [Document(text=text + "Foobar", extra_info=extra_info or {})]
+    
+# class MyPdfReader(BaseReader):
+#     def load_data(self, file, extra_info=None):
+#         result, elapse_list = engine(file)
+#         text = str(result)
+#         return [Document(text=text + "Foobar", extra_info=extra_info or {})]
+
+
+
+
 
 # Patching the default file reader to support other file types
 FILE_READER_CLS = DEFAULT_FILE_READER_CLS.copy()
 FILE_READER_CLS.update(
     {
         ".json": JSONReader,
+        ".jpg": MyImageReader,
+        ".png": MyImageReader,
+        ".jpeg": MyImageReader,
     }
 )
+
+
+logger.debug(f"----------> {FILE_READER_CLS}")
+
+
 
 
 class IngestionHelper:
